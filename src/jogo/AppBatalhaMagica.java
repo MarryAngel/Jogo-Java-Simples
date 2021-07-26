@@ -20,11 +20,11 @@ class AppBatalhaMagica extends JFrame {
 	Desenho des = new Desenho();
 	Timer t;
 	int xFogo=10, xGelo=1085, yFogo=400, yGelo=400, velyFogo=0;
-	int estadoFogo=0, estadoGelo=0;
+	int estadoFogo=0, estadoGelo=0, vidaFogo=400, vidaGelo=400;
 	int dirFogo=1;
 	int viradoFogo=0;
-	int animacaoFogo, gravidade=10;
-	boolean saltoFogo=false;
+	int animacaoFogo, gravidade=10, dano=10;
+	boolean saltoFogo=false, abaixadoFogo=false, mortoFogo=false;
 	
 	public int prendedor(int num, int min, int max) {
 		if(num<min)
@@ -54,6 +54,12 @@ class AppBatalhaMagica extends JFrame {
 	        imgFogo[8] = ImageIO.read(new File(""+caminho+"FogoPula2.png"));
 	        imgFogo[9] = ImageIO.read(new File(""+caminho+"FogoPula3.png"));
 	        imgFogo[10] = ImageIO.read(new File(""+caminho+"FogoPula4.png"));
+	        imgFogo[11] = ImageIO.read(new File(""+caminho+"FogoMorto1.png"));
+	        imgFogo[12] = ImageIO.read(new File(""+caminho+"FogoMorto2.png"));
+	        imgFogo[13] = ImageIO.read(new File(""+caminho+"FogoAtaque1.png"));
+	        imgFogo[14] = ImageIO.read(new File(""+caminho+"FogoAtaque2.png"));
+	        imgFogo[15] = ImageIO.read(new File(""+caminho+"FogoAtaque3.png"));
+	        imgFogo[16] = ImageIO.read(new File(""+caminho+"FogoAtaque4.png"));
 	        //Imagens referente ao mago de gelo
 	        imgGelo[0] = ImageIO.read(new File(""+caminho+"GeloParado.png"));
 	      } catch (IOException e) {
@@ -67,6 +73,14 @@ class AppBatalhaMagica extends JFrame {
 	      g.drawImage(imgJogo[0], 0, 0, getSize().width, getSize().height, this);
 	      g.drawImage(imgFogo[estadoFogo], xFogo, yFogo, dirFogo*imgFogo[estadoFogo].getWidth(this)*1/2, imgFogo[estadoFogo].getHeight(this)*1/2, this);
 	      g.drawImage(imgGelo[estadoGelo], xGelo, yGelo, -imgGelo[estadoGelo].getWidth(this)*1/2, imgGelo[estadoGelo].getHeight(this)*1/2, this);
+	      //Desenhos para a barra de vida
+	      g.setColor(new Color(110,110,110)); 
+	      g.fillRect(10, 20, 400, 50);
+	      g.fillRect(getSize().width-410, 20, 400, 50);
+	      g.setColor(new Color(255,130*vidaFogo/400,0)); //255,0,0
+	      g.fillRect(10, 20, vidaFogo, 50);
+	      g.setColor(new Color(255-255*vidaGelo/400,200*vidaGelo/400,255*vidaGelo/400));
+	      g.fillRect(getSize().width-10, 20, -vidaGelo, 50);
 	      //System.out.println("YFogo" + yFogo + ", Dir: "+dirFogo);
 	      Toolkit.getDefaultToolkit().sync();
 	    }
@@ -75,6 +89,8 @@ class AppBatalhaMagica extends JFrame {
 	  void tick() {
 		  yFogo=prendedor(yFogo+velyFogo,0,400);
 		  velyFogo=prendedor(velyFogo+gravidade,-50,50);
+		  vidaFogo=prendedor(vidaFogo-dano,0,400);
+		  vidaGelo=prendedor(vidaGelo-dano,0,400);
 		  if(saltoFogo) {
 			  animacaoFogo++;
 			  if(animacaoFogo>10) {
@@ -84,6 +100,24 @@ class AppBatalhaMagica extends JFrame {
 			  else
 			   estadoFogo=animacaoFogo/2+5;
 			  System.out.println("animacaoFogo = " + animacaoFogo);
+		  }
+		  else if(abaixadoFogo) {
+			  animacaoFogo++;
+			  if(animacaoFogo>2) {
+				  estadoFogo=0;
+				  abaixadoFogo=false;
+			  }
+			  else
+				  estadoFogo=animacaoFogo+10;
+		  }
+		  else if(mortoFogo) {
+			  animacaoFogo++;
+			  if(animacaoFogo>6) {
+				  estadoFogo=0;
+				  mortoFogo=false;
+			  }
+			  else
+				  estadoFogo=animacaoFogo/2+13;
 		  }
 		  des.repaint();
 //			 if(estadoFogo == 6) {
@@ -157,7 +191,16 @@ class AppBatalhaMagica extends JFrame {
 	    		   }
 	    		
 	    		else if(e.getKeyCode() == KeyEvent.VK_S) {
-	    			
+	    			if(!abaixadoFogo) {
+	    				abaixadoFogo=true;
+	    				animacaoFogo=0;
+	    			}
+	    		}
+	    		else if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+	    			if(!mortoFogo) {
+	    				mortoFogo=true;
+	    				animacaoFogo=0;
+	    			}
 	    		}
 	    	}
 	    });
