@@ -1,5 +1,5 @@
 package jogo;
-
+//Movimentação com wasd e ataque na barra de espaço
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,12 +19,12 @@ class AppBatalhaMagica extends JFrame {
 	Image imgGelo[] = new Image[20];
 	Desenho des = new Desenho();
 	Timer t;
-	int xFogo=10, xGelo=1085, yFogo=400, yGelo=400, velyFogo=0;
+	int xFogo=10, xGelo=1000, yFogo=400, yGelo=400, velyFogo=0;
 	int estadoFogo=0, estadoGelo=0, vidaFogo=400, vidaGelo=400;
-	int dirFogo=1;
+	int dirFogo=1, dirGelo=-1;
 	int viradoFogo=0;
-	int animacaoFogo, gravidade=10, dano=10;
-	boolean saltoFogo=false, abaixadoFogo=false, mortoFogo=false;
+	int animacaoFogo, gravidade=10, dano=100, animacaoGelo=0;
+	boolean saltoFogo=false, abaixadoFogo=false, mortoFogo=false, ataqueFogo=false, saltoGelo=false, abaixadoGelo=false, morteGelo=false;
 	
 	public int prendedor(int num, int min, int max) {
 		if(num<min)
@@ -32,6 +32,16 @@ class AppBatalhaMagica extends JFrame {
 		if(num>max)
 			return max;
 		return num;
+	}
+	
+	public void reset(){
+		vidaGelo=400;
+		vidaFogo=400;
+		xGelo=1000;
+		xFogo=10;
+		dirFogo=1;
+		dirGelo=-1;
+		morteGelo=false;
 	}
 	
 	class Desenho extends JPanel {
@@ -62,6 +72,10 @@ class AppBatalhaMagica extends JFrame {
 	        imgFogo[16] = ImageIO.read(new File(""+caminho+"FogoAtaque4.png"));
 	        //Imagens referente ao mago de gelo
 	        imgGelo[0] = ImageIO.read(new File(""+caminho+"GeloParado.png"));
+	        imgGelo[1] = ImageIO.read(new File(""+caminho+"GeloMorto1.png"));
+	        imgGelo[2] = ImageIO.read(new File(""+caminho+"GeloMorto2.png"));
+	        imgGelo[3] = ImageIO.read(new File(""+caminho+"GeloMorto3.png"));
+	        imgGelo[4] = ImageIO.read(new File(""+caminho+"GeloMorto4.png"));
 	      } catch (IOException e) {
 	        JOptionPane.showMessageDialog(this, "A imagem não pode ser carregada!\n" + e, "Erro", JOptionPane.ERROR_MESSAGE);
 	        System.exit(1);
@@ -72,7 +86,7 @@ class AppBatalhaMagica extends JFrame {
 	      super.paintComponent(g);
 	      g.drawImage(imgJogo[0], 0, 0, getSize().width, getSize().height, this);
 	      g.drawImage(imgFogo[estadoFogo], xFogo, yFogo, dirFogo*imgFogo[estadoFogo].getWidth(this)*1/2, imgFogo[estadoFogo].getHeight(this)*1/2, this);
-	      g.drawImage(imgGelo[estadoGelo], xGelo, yGelo, -imgGelo[estadoGelo].getWidth(this)*1/2, imgGelo[estadoGelo].getHeight(this)*1/2, this);
+	      g.drawImage(imgGelo[estadoGelo], xGelo, yGelo, dirGelo*imgGelo[estadoGelo].getWidth(this)*1/2, imgGelo[estadoGelo].getHeight(this)*1/2, this);
 	      //Desenhos para a barra de vida
 	      g.setColor(new Color(110,110,110)); 
 	      g.fillRect(10, 20, 400, 50);
@@ -87,10 +101,21 @@ class AppBatalhaMagica extends JFrame {
 	}
 
 	  void tick() {
+		  if(morteGelo) {
+			  animacaoGelo++;
+			  if(animacaoGelo>8) {
+				  estadoGelo=0;
+				  JOptionPane.showMessageDialog(this, "Gelo perdeu!");
+				  reset();
+			  }
+			  else
+			   estadoGelo=animacaoGelo/2;
+			  
+		  }
 		  yFogo=prendedor(yFogo+velyFogo,0,400);
 		  velyFogo=prendedor(velyFogo+gravidade,-50,50);
-		  vidaFogo=prendedor(vidaFogo-dano,0,400);
-		  vidaGelo=prendedor(vidaGelo-dano,0,400);
+		  vidaFogo=prendedor(vidaFogo,0,400);
+		  vidaGelo=prendedor(vidaGelo,0,400);
 		  if(saltoFogo) {
 			  animacaoFogo++;
 			  if(animacaoFogo>10) {
@@ -110,47 +135,27 @@ class AppBatalhaMagica extends JFrame {
 			  else
 				  estadoFogo=animacaoFogo+10;
 		  }
-		  else if(mortoFogo) {
+		  else if(ataqueFogo) {
 			  animacaoFogo++;
 			  if(animacaoFogo>6) {
 				  estadoFogo=0;
-				  mortoFogo=false;
+				  ataqueFogo=false;
+  				if(Math.abs(xFogo-xGelo)<500 && Math.abs(xFogo-xGelo)>100) {
+  				  if((xFogo-xGelo>0 && dirFogo<0) || (xFogo-xGelo<0 && dirFogo>0)) {
+  					if(!(abaixadoGelo || saltoGelo))
+  						vidaGelo=prendedor(vidaGelo-dano,0,400);
+  					if(vidaGelo<=0) {
+  						animacaoGelo=0;
+  						morteGelo=true;
+  					}
+  				  }
+				}
 			  }
 			  else
 				  estadoFogo=animacaoFogo/2+13;
 		  }
 		  des.repaint();
-//			 if(estadoFogo == 6) {
-//				 yFogo-=50;
-//				 estadoFogo = 7;
-//				des.repaint();
-//			 }
-//			else if(estadoFogo == 7) {
-//				yFogo-=50;
-//				estadoFogo = 8;
-//				des.repaint();
-//			}
-//			else if(estadoFogo == 8) {
-//				yFogo-=50;
-//				estadoFogo = 9;
-//				des.repaint();
-//			}
-//			else if(estadoFogo == 9) {
-//				yFogo+=50;
-//				estadoFogo = 10;
-//				des.repaint();
-//			}
-//			else if(estadoFogo == 10) {
-//				yFogo+=50;
-//				estadoFogo=11;
-//				des.repaint();
-//			}
-//			else if(estadoFogo == 11) {
-//				yFogo+=50;
-//				estadoFogo=0;
-//				des.repaint();
-//			} 
-		  }
+	 }
 	
 	AppBatalhaMagica() {
 		super("Batalha Magica");
@@ -163,8 +168,8 @@ class AppBatalhaMagica extends JFrame {
 	    		if(e.getKeyCode() == KeyEvent.VK_D) {
 	    			if(dirFogo==-1) {
 	    				xFogo-=imgFogo[estadoFogo].getWidth(des)*1/2;
+	    				dirFogo=1;
 	    			}
-	    			dirFogo=1;
 	    			xFogo=prendedor(xFogo+10, -10, 900);
 	    			estadoFogo++;
 	    			if(estadoFogo==6)
@@ -197,8 +202,8 @@ class AppBatalhaMagica extends JFrame {
 	    			}
 	    		}
 	    		else if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-	    			if(!mortoFogo) {
-	    				mortoFogo=true;
+	    			if(!ataqueFogo) {
+	    				ataqueFogo=true;
 	    				animacaoFogo=0;
 	    			}
 	    		}
